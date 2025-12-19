@@ -54,21 +54,18 @@ const GoogleSheetsIntegration = ({ students, onStudentsUpdate }) => {
         for (let i = 0; i < data.length; i++) {
           const row = data[i];
           const rowValues = Object.values(row);
-          const firstName = rowValues[2] || "";
-          const lastName = rowValues[3] || "";
-          if (firstName.trim()) {
-            const fullName = lastName.trim()
-              ? `${firstName.trim()} ${lastName.trim()}`.trim()
-              : firstName.trim();
+          const email = (rowValues[3] || "").toString().trim();
+          const name = (rowValues[4] || "").toString().trim();
+          if (name) {
             newStudents.push({
               id: Date.now() + i,
-              name: fullName,
-              email: "",
+              name,
+              email,
             });
           }
         }
       } else if (validateExcelUrl(sheetUrl)) {
-        const { headers, rows } = await fetchExcelRowsFromUrl(sheetUrl);
+        const { rows } = await fetchExcelRowsFromUrl(sheetUrl);
         if (!rows || rows.length === 0) {
           showMessage(
             "No data found in the Excel file (first sheet).",
@@ -76,21 +73,15 @@ const GoogleSheetsIntegration = ({ students, onStudentsUpdate }) => {
           );
           return;
         }
-        const nombreIndexFromHeader = Array.isArray(headers)
-          ? headers.findIndex(
-              (h) => (h || "").toString().trim().toLowerCase() === "nombre"
-            )
-          : -1;
-        const nombreIndex =
-          nombreIndexFromHeader !== -1 ? nombreIndexFromHeader : 5;
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i] || [];
-          const nombre = (row[nombreIndex] || "").toString().trim();
-          if (nombre) {
+          const email = (row[3] || "").toString().trim(); // Column D
+          const name = (row[4] || "").toString().trim(); // Column E
+          if (name) {
             newStudents.push({
               id: Date.now() + i,
-              name: nombre,
-              email: "",
+              name,
+              email,
             });
           }
         }
@@ -104,7 +95,7 @@ const GoogleSheetsIntegration = ({ students, onStudentsUpdate }) => {
 
       if (newStudents.length === 0) {
         showMessage(
-          "No valid student names found in columns C and D.",
+          "No valid entries found in columns D (email) and E (name).",
           "error"
         );
         return;
@@ -127,35 +118,29 @@ const GoogleSheetsIntegration = ({ students, onStudentsUpdate }) => {
     if (!file) return;
     setIsLoading(true);
     try {
-      const { headers, rows } = await parseExcelFile(file);
+      const { rows } = await parseExcelFile(file);
       if (!rows || rows.length === 0) {
         showMessage("No data found in the Excel file (first sheet).", "error");
         return;
       }
 
       const newStudents = [];
-      const nombreIndexFromHeader = Array.isArray(headers)
-        ? headers.findIndex(
-            (h) => (h || "").toString().trim().toLowerCase() === "nombre"
-          )
-        : -1;
-      const nombreIndex =
-        nombreIndexFromHeader !== -1 ? nombreIndexFromHeader : 5;
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i] || [];
-        const nombre = (row[nombreIndex] || "").toString().trim();
-        if (nombre) {
+        const email = (row[3] || "").toString().trim(); // Column D
+        const name = (row[4] || "").toString().trim(); // Column E
+        if (name) {
           newStudents.push({
             id: Date.now() + i,
-            name: nombre,
-            email: "",
+            name,
+            email,
           });
         }
       }
 
       if (newStudents.length === 0) {
         showMessage(
-          "No valid student names found (expected 'Nombre' in column 6 for Excel).",
+          "No valid entries found in columns D (email) and E (name).",
           "error"
         );
         return;
